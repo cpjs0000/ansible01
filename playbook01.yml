@@ -1,0 +1,45 @@
+---
+- name: Install Apache and upload index.html
+  hosts: all
+  become: yes
+
+  vars:
+    source: ./index.html
+    dest: /var/www/html
+
+  tasks:
+  - name: Install Apache
+    yum: name=httpd state=latest
+
+  - name: Start and enable on startup
+    service: name=httpd state=started enabled=yes
+
+  - name: Check if Apache is running
+    command: systemctl status httpd
+    ignore_errors: yes
+    changed_when: false
+    register: service_apache_status
+
+  - name: Report status of Apache
+    fail:
+      msg: |
+        Service apache2 is not running.
+        Output of `systemctl status httpd`:
+        {{ service_apache_status.stdout }}
+        {{ service_apache_status.stderr }}
+    when: service_apache_status | failed
+
+  - name: Copy index.html page
+    copy: src={{ source }} dest={{ dest }}
+    notify: Restart Apache
+
+
+
+
+
+
+
+
+  handlers:
+  - name: Restart Apache
+    service: name=httpd stare=restarted
