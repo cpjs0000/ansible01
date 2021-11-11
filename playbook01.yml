@@ -8,38 +8,28 @@
     dest: /var/www/html
 
   tasks:
-  - name: Install Apache
-    yum: name=httpd state=latest
+  - name: Install Apache and Firewalld
+    yum: name={{ item }} state=latest
+    loop:
+      - httpd
+      - firewalld
 
   - name: Start and enable on startup
     service: name=httpd state=started enabled=yes
-
-  - name: Check if Apache is running
-    command: systemctl status httpd
-    ignore_errors: yes
-    changed_when: false
-    register: service_apache_status
-
-  - name: Report status of Apache
-    fail:
-      msg: |
-        Service apache2 is not running.
-        Output of `systemctl status httpd`:
-        {{ service_apache_status.stdout }}
-        {{ service_apache_status.stderr }}
-    when: service_apache_status | failed
 
   - name: Copy index.html page
     copy: src={{ source }} dest={{ dest }}
     notify: Restart Apache
 
-
-
-
-
+  - name: Open http port
+    firewalld: service=http permanent=true state=enabled
+    notify: Restart Firewalld
 
 
 
   handlers:
   - name: Restart Apache
-    service: name=httpd stare=restarted
+    service: name=httpd state=restarted
+  
+  - name: Restart Firewalld
+    service: name=firewalld state=restarted
