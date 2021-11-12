@@ -4,8 +4,7 @@
   become: yes
 
   vars:
-    source: ./index.html
-    dest: /var/www/html
+    f: /var/www/html/index.html
 
   tasks:
   - name: Install Apache and Firewalld
@@ -18,7 +17,7 @@
     service: name=httpd state=started enabled=yes
 
   - name: Copy index.html page
-    copy: src={{ source }} dest={{ dest }}
+    copy: content="This is a host with {{ ansible_os_family }} OS" dest={{ f }}
     notify: Restart Apache
 
   - name: Open http port
